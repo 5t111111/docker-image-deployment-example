@@ -9,6 +9,7 @@ import {
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as path from "path";
+import * as ecrdeploy from "cdk-ecr-deployment";
 
 export class DockerImageDeploymentExampleStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -38,7 +39,13 @@ export class DockerImageDeploymentExampleStack extends Stack {
       }
     );
 
-    dockerImageAsset.repository = repository;
+    // !! 追記: cdk-ecr-deployment !!
+    new ecrdeploy.ECRDeployment(this, "DeployDockerImage", {
+      src: new ecrdeploy.DockerImageName(dockerImageAsset.imageUri),
+      dest: new ecrdeploy.DockerImageName(
+        `471799503102.dkr.ecr.ap-northeast-1.amazonaws.com/docker-image-deployment-example:latest`
+      ),
+    });
 
     //**************************************************** */
     // Task Definition
@@ -56,7 +63,7 @@ export class DockerImageDeploymentExampleStack extends Stack {
 
     // Add container to task definition
     taskDefinition.addContainer("AppContainer", {
-      image: ecs.ContainerImage.fromEcrRepository(repository),
+      image: ecs.ContainerImage.fromEcrRepository(repository, "latest"),
       portMappings: [
         {
           containerPort: 3000,
