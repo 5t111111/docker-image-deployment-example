@@ -3,7 +3,8 @@ import {
   StackProps,
   aws_ec2 as ec2,
   aws_ecs as ecs,
-  // aws_ecr_assets as ecrAssets,
+  aws_ecr as ecr,
+  aws_ecr_assets as ecrAssets,
   aws_ecs_patterns as ecsPatterns,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
@@ -22,12 +23,22 @@ export class DockerImageDeploymentExampleStack extends Stack {
       natGateways: 1,
     });
 
-    // //**************************************************** */
-    // // ECR Image
-    // //**************************************************** */
-    // const asset = new ecrAssets.DockerImageAsset(this, "DockerImageAsset", {
-    //   directory: path.join(__dirname, "../..", "app"),
-    // });
+    //**************************************************** */
+    // ECR
+    //**************************************************** */
+    const repository = new ecr.Repository(this, "Repository", {
+      repositoryName: "docker-image-deployment-example",
+    });
+
+    const dockerImageAsset = new ecrAssets.DockerImageAsset(
+      this,
+      "DockerImageAsset",
+      {
+        directory: path.join(__dirname, "../..", "app"),
+      }
+    );
+
+    dockerImageAsset.repository = repository;
 
     //**************************************************** */
     // Task Definition
@@ -45,9 +56,7 @@ export class DockerImageDeploymentExampleStack extends Stack {
 
     // Add container to task definition
     taskDefinition.addContainer("AppContainer", {
-      image: ecs.ContainerImage.fromAsset(
-        path.resolve(__dirname, "../..", "app")
-      ),
+      image: ecs.ContainerImage.fromEcrRepository(repository),
       portMappings: [
         {
           containerPort: 3000,
