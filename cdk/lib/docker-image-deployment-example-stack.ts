@@ -43,7 +43,7 @@ export class DockerImageDeploymentExampleStack extends Stack {
     new ecrdeploy.ECRDeployment(this, "DeployDockerImage", {
       src: new ecrdeploy.DockerImageName(dockerImageAsset.imageUri),
       dest: new ecrdeploy.DockerImageName(
-        `471799503102.dkr.ecr.ap-northeast-1.amazonaws.com/docker-image-deployment-example:latest`
+        `471799503102.dkr.ecr.ap-northeast-1.amazonaws.com/docker-image-deployment-example:hogefuga`
       ),
     });
 
@@ -63,7 +63,7 @@ export class DockerImageDeploymentExampleStack extends Stack {
 
     // Add container to task definition
     taskDefinition.addContainer("AppContainer", {
-      image: ecs.ContainerImage.fromEcrRepository(repository, "latest"),
+      image: ecs.ContainerImage.fromEcrRepository(repository, "hogefuga"),
       portMappings: [
         {
           containerPort: 3000,
