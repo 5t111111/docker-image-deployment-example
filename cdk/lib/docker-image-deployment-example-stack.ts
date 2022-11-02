@@ -4,12 +4,11 @@ import {
   aws_ec2 as ec2,
   aws_ecs as ecs,
   aws_ecr as ecr,
-  aws_ecr_assets as ecrAssets,
   aws_ecs_patterns as ecsPatterns,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as path from "path";
-import * as ecrdeploy from "cdk-ecr-deployment";
+import * as imagedeploy from "cdk-docker-image-deployment";
 
 export class DockerImageDeploymentExampleStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -31,21 +30,18 @@ export class DockerImageDeploymentExampleStack extends Stack {
       repositoryName: "docker-image-deployment-example",
     });
 
-    const dockerImageAsset = new ecrAssets.DockerImageAsset(
+    new imagedeploy.DockerImageDeployment(
       this,
-      "DockerImageAsset",
+      "ExampleImageDeploymentWithTag",
       {
-        directory: path.join(__dirname, "../..", "app"),
+        source: imagedeploy.Source.directory(
+          path.join(__dirname, "../..", "app")
+        ),
+        destination: imagedeploy.Destination.ecr(repository, {
+          tag: "myspecialtag",
+        }),
       }
     );
-
-    // !! 追記: cdk-ecr-deployment !!
-    new ecrdeploy.ECRDeployment(this, "DeployDockerImage", {
-      src: new ecrdeploy.DockerImageName(dockerImageAsset.imageUri),
-      dest: new ecrdeploy.DockerImageName(
-        `471799503102.dkr.ecr.ap-northeast-1.amazonaws.com/docker-image-deployment-example:hogefuga`
-      ),
-    });
 
     //**************************************************** */
     // Task Definition
@@ -63,7 +59,7 @@ export class DockerImageDeploymentExampleStack extends Stack {
 
     // Add container to task definition
     taskDefinition.addContainer("AppContainer", {
-      image: ecs.ContainerImage.fromEcrRepository(repository, "hogefuga"),
+      image: ecs.ContainerImage.fromEcrRepository(repository, "myspecialtag"),
       portMappings: [
         {
           containerPort: 3000,
